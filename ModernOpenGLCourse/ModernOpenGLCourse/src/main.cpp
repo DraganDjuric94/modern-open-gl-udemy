@@ -3,18 +3,31 @@
 
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
-#include <glm/mat4x4.hpp>
+
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/type_ptr.hpp>
+
+const float PI_F = 3.14159265358979f;
 
 // Window dimensions
 const GLint WIDTH = 800;
 const GLint HEIGHT = 600;
+const float toRadians = PI_F / 180.0f;
 
-GLuint VAO, VBO, shader, uniformXMove;
+GLuint VAO, VBO, shader, uniformModel;
 
 bool direction = true; // left = false, right = true
 float triOffset = 0.0f;
 float triMaxOffset = 0.7f;
 float triIncrement = 0.0005f;
+
+float currentAngle = 0.0f;
+
+bool sizeDirection = true;
+float currentSize = 0.4f;
+float maxSize = 0.8f;
+float minSize = 0.01f;
 
 // Vertex shader
 static const char* vShader = "											\n\
@@ -22,22 +35,22 @@ static const char* vShader = "											\n\
 																		\n\
 layout (location = 0) in vec3 pos;										\n\
 																		\n\
-uniform float xMove;													\n\
+uniform mat4 model;														\n\
 																		\n\
 void main()																\n\
 {																		\n\
-	gl_Position = vec4(0.4 * pos.x + xMove, 0.4 * pos.y, pos.z, 1.0);	\n\
+	gl_Position = model * vec4(pos, 1.0);								\n\
 }";
 
 // Fragment shader
-static const char* fShader = "									\n\
-#version 330													\n\
-																\n\
-out vec4 color;													\n\
-																\n\
-void main()														\n\
-{																\n\
-	color = vec4(1.0, 0.0, 0.0, 1.0);							\n\
+static const char* fShader = "											\n\
+#version 330															\n\
+																		\n\
+out vec4 color;															\n\
+																		\n\
+void main()																\n\
+{																		\n\
+	color = vec4(1.0, 0.0, 0.0, 1.0);									\n\
 }";
 
 void CreateTriangle()
@@ -132,7 +145,7 @@ void CompileShaders()
 		return;
 	}
 
-	uniformXMove = glGetUniformLocation(shader, "xMove");
+	uniformModel = glGetUniformLocation(shader, "model");
 }
 
 int main()
@@ -208,13 +221,43 @@ int main()
 			direction = !direction;
 		}
 
+		currentAngle += 0.005f;
+		if (currentAngle >= 360)
+		{
+			currentAngle -= 360;
+		}
+
+		if (sizeDirection)
+		{
+			currentSize += 0.0001f;
+		}
+		else
+		{
+			currentSize -= 0.0001f;
+		}
+
+		if (currentSize >= maxSize || currentSize <= minSize)
+		{
+			sizeDirection = !sizeDirection;
+		}
+
 		// Clear window
 		glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT);
 
 		glUseProgram(shader);
 
-		glUniform1f(uniformXMove, triOffset);
+		// Create identity matrix
+		glm::mat4 model(1.0f);
+		// Translate only x coordinate value
+		model = glm::translate(model, glm::vec3(triOffset, 0.0f, 0.0f));
+		// Rotate by curr angle degrees around z axis
+		model = glm::rotate(model, currentAngle * toRadians, glm::vec3(0.0f, 0.0f, 1.0f));
+		// Scale x and y values to curr size percent
+		model = glm::scale(model, glm::vec3(currentSize, currentSize, 1.0f));
+
+		// Set our model matrix as uniform value
+		glUniformMatrix4fv(uniformModel, 1, GL_FALSE, glm::value_ptr(model));
 
 		glBindVertexArray(VAO);
 
