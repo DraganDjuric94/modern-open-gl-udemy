@@ -35,22 +35,27 @@ static const char* vShader = "											\n\
 																		\n\
 layout (location = 0) in vec3 pos;										\n\
 																		\n\
+out vec4 vColor;														\n\
+																		\n\
 uniform mat4 model;														\n\
 																		\n\
 void main()																\n\
 {																		\n\
 	gl_Position = model * vec4(pos, 1.0);								\n\
+	vColor = vec4(clamp(pos, 0.0, 1.0), 1.0);							\n\
 }";
 
 // Fragment shader
 static const char* fShader = "											\n\
 #version 330															\n\
 																		\n\
+in vec4 vColor;															\n\
+																		\n\
 out vec4 color;															\n\
 																		\n\
 void main()																\n\
 {																		\n\
-	color = vec4(1.0, 0.0, 0.0, 1.0);									\n\
+	color = vColor;														\n\
 }";
 
 void CreateTriangle()
@@ -250,11 +255,11 @@ int main()
 		// Create identity matrix
 		glm::mat4 model(1.0f);
 		// Translate only x coordinate value
-		model = glm::translate(model, glm::vec3(triOffset, 0.0f, 0.0f));
+		//model = glm::translate(model, glm::vec3(triOffset, 0.0f, 0.0f));
 		// Rotate by curr angle degrees around z axis
-		model = glm::rotate(model, currentAngle * toRadians, glm::vec3(0.0f, 0.0f, 1.0f));
+		//model = glm::rotate(model, currentAngle * toRadians, glm::vec3(0.0f, 0.0f, 1.0f));
 		// Scale x and y values to curr size percent
-		model = glm::scale(model, glm::vec3(currentSize, currentSize, 1.0f));
+		model = glm::scale(model, glm::vec3(0.4f, 0.4f, 1.0f));
 
 		// Set our model matrix as uniform value
 		glUniformMatrix4fv(uniformModel, 1, GL_FALSE, glm::value_ptr(model));
