@@ -12,6 +12,7 @@
 #include "Window.h"
 #include "Mesh.h"
 #include "Shader.h"
+#include "Camera.h"
 
 const float PI_F = 3.14159265358979f;
 const float toRadians = PI_F / 180.0f;
@@ -19,6 +20,10 @@ const float toRadians = PI_F / 180.0f;
 Window mainWindow;
 std::vector<Mesh*> meshList;
 std::vector<Shader*> shaderList;
+Camera camera;
+
+GLfloat deltaTime = 0.0f;
+GLfloat lastTime = 0.0f;
 
 // Vertex shader
 static const char* vShader = "src/shaders/shader.vert";
@@ -65,15 +70,29 @@ int main()
 	CreateObjects();
 	CreateShaders();
 
-	GLuint uniformProjection = 0, uniformModel = 0;
+	camera = Camera(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f), -90.0f, 0.0f, 5.0f, 0.25f);
+
+	GLuint uniformProjection = 0, uniformModel = 0, uniformView = 0;
 	// Create perspective projection matrix
 	glm::mat4 projection = glm::perspective(45.0f, mainWindow.GetBufferWidth() / mainWindow.GetBufferHeight(), 0.1f, 100.0f);
 
 	// Loop until window is closed
 	while (!mainWindow.GetShouldClose())
 	{
+		// Get time in seconds since glfw was initialized
+		// And calculate how long has passed since last check
+		GLfloat now = glfwGetTime();
+		deltaTime = now - lastTime;
+		lastTime = now;
+
+
 		// Get and handle user input events
 		glfwPollEvents();
+
+		// Enable key control
+		camera.KeyControl(mainWindow.GetKeys(), deltaTime);
+		// Enable mouse controls
+		camera.MouseControl(mainWindow.GetXChange(), mainWindow.GetYChange());
 
 		// Clear window
 		glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
@@ -83,6 +102,7 @@ int main()
 		shaderList[0]->UseShader();
 		uniformModel = shaderList[0]->GetModelLocation();
 		uniformProjection = shaderList[0]->GetProjectionLocation();
+		uniformView = shaderList[0]->GetViewLocation();
 
 		// Create identity matrix
 		glm::mat4 model(1.0f);
@@ -97,6 +117,8 @@ int main()
 		glUniformMatrix4fv(uniformModel, 1, GL_FALSE, glm::value_ptr(model));
 		// Set our projection matrix as uniform "projection" value
 		glUniformMatrix4fv(uniformProjection, 1, GL_FALSE, glm::value_ptr(projection));
+		// Set our view matrix as uniform "view" value
+		glUniformMatrix4fv(uniformView, 1, GL_FALSE, glm::value_ptr(camera.CalculateViewMatrix()));
 
 		meshList[0]->RenderMesh();
 

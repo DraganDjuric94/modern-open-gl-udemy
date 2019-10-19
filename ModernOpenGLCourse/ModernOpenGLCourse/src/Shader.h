@@ -9,7 +9,7 @@
 class Shader
 {
 private:
-	GLuint shaderID, uniformProjection, uniformModel;
+	GLuint shaderID, uniformProjection, uniformModel, uniformView;
 public:
 	Shader();
 	~Shader();
@@ -24,5 +24,6 @@ public:
 
 	inline GLuint GetProjectionLocation() const { return uniformProjection; };
 	inline GLuint GetModelLocation() const { return uniformModel; };
+	inline GLuint GetViewLocation() const { return uniformView; };
 };
 
